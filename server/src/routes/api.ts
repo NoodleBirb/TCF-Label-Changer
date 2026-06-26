@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { isHubSpotConfigured } from "../config.js";
 import { verifyHubSpotConnection } from "../hubspot/client.js";
+import { trainingsRouter } from "./trainings.js";
 
 export const apiRouter = Router();
+
+apiRouter.use(trainingsRouter);
 
 apiRouter.get("/health", (_req, res) => {
   res.json({
@@ -29,4 +32,8 @@ apiRouter.get("/hubspot/status", async (_req, res) => {
     connected: result.connected,
     message: result.message,
   });
+});
+
+apiRouter.use((_req, res) => {
+  res.status(404).json({ error: "API route not found" });
 });

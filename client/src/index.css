@@ -1,16 +1,40 @@
 :root {
-  color-scheme: light dark;
+  --blue-dark: #1f4370;
+  --blue-primary: #2c60a4;
+  --blue-medium: #429cd1;
+  --blue-light: #8fc2e1;
+  --blue-surface: #eff6fb;
+
+  --green-dark: #254422;
+  --green-accessible: #35612e;
+  --green-primary: #3d8538;
+  --green-light: #78b038;
+  --green-surface: #ebf5e0;
+
+  --error-red: #a30b00;
+  --yellow: #ffbf00;
+  --orange: #f46036;
+  --purple-dark: #783f6a;
+
+  --gray-dark: #161c21;
+  --gray-medium: #72787e;
+  --gray-surface: #ecf1f8;
+
+  --text: var(--gray-dark);
+  --text-muted: var(--gray-medium);
+  --page-bg: var(--gray-surface);
+  --card-bg: #ffffff;
+  --border: #d5dde8;
+  --focus: var(--blue-medium);
+
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
-  color: #1a1a1a;
-  background: #fff;
+  color: var(--text);
+  background: var(--page-bg);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #f3f4f6;
-    background: #111;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
@@ -19,4 +43,16 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
