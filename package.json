@@ -20,5 +20,9 @@
     "cross-env": "^7.0.3",
     "esbuild": "^0.25.0",
     "postject": "1.0.0-alpha.6"
+  },
+  "overrides": {
+    "vite": "6.3.5",
+    "@vitejs/plugin-react": "5.2.0"
   }
 }

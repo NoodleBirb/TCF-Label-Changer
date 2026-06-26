@@ -32,12 +32,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        shell: bash
-        run: |
-          npm ci --include=optional
-          # Reinstall client deps per-platform (rolldown native bindings are OS-specific).
-          rm -rf client/node_modules
-          npm install --include=optional -w client
+        run: npm ci
 
       - name: Build client and server
         run: npm run build
