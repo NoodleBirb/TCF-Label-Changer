@@ -201,7 +201,7 @@ function App() {
       <header className="app-header">
         <div>
           <h1>TCF Label Change</h1>
-          <p>Move registrants to attendees for closed trainings</p>
+          <p>Move registrants to attendees for trainings closed for registration</p>
         </div>
         {canUndo && (
           <button
@@ -246,7 +246,7 @@ function App() {
             {loadingTrainings
               ? "Loading trainings..."
               : trainings.length === 0
-                ? "No closed trainings available"
+                ? "No trainings closed for registration"
                 : "Select a training"}
           </option>
           {trainings.map((training) => (
@@ -256,7 +256,7 @@ function App() {
           ))}
         </select>
         <p className="hint">
-          Only trainings in the closed pipeline stage are shown.
+          Only trainings in the Closed for Registration pipeline stage are shown.
         </p>
       </section>
 

@@ -1,7 +1,6 @@
 import { FilterOperatorEnum } from "@hubspot/api-client/lib/codegen/crm/objects/models/Filter.js";
 import type { ProgramId } from "./domainConfig.js";
 import {
-  contactProperties,
   programs,
   trainingConfig,
   TRAINING_OBJECT_TYPE,
@@ -17,6 +16,7 @@ import {
   type AssociationType,
   type ResolvedAssociationSpec,
 } from "./associationLabels.js";
+import { fetchContactDetailsByIds, formatContactName } from "./contacts.js";
 
 export type TrainingSummary = {
   id: string;
@@ -122,28 +122,24 @@ export async function listTrainingContacts(
     return [];
   }
 
-  const hubspot = getHubSpotClient();
-  const contactResponse = await hubspot.crm.contacts.batchApi.read({
-    properties: Object.values(contactProperties),
-    inputs: visible.map((row) => ({ id: row.toObjectId })),
-    propertiesWithHistory: [],
-  });
-
-  const propertiesById = new Map(
-    contactResponse.results.map((contact) => [contact.id, contact.properties]),
+  const detailsById = await fetchContactDetailsByIds(
+    visible.map((row) => row.toObjectId),
   );
 
   const contacts: TrainingContact[] = visible.map((row) => {
     const label = getContactLabelKey(row.associationTypes)!;
-    const properties = propertiesById.get(row.toObjectId) ?? {};
-    const firstName = properties[contactProperties.firstName] ?? "";
-    const lastName = properties[contactProperties.lastName] ?? "";
+    const contactId = String(row.toObjectId);
+    const details = detailsById.get(contactId) ?? {
+      firstName: "",
+      lastName: "",
+      email: "",
+    };
 
     return {
-      id: row.toObjectId,
-      firstName,
-      lastName,
-      email: properties[contactProperties.email] ?? "",
+      id: contactId,
+      firstName: details.firstName,
+      lastName: details.lastName,
+      email: details.email,
       label,
       selectable: label === "registrant",
     };
@@ -220,7 +216,7 @@ export async function convertRegistrantsToStudents(
   for (const contactId of contactIds) {
     const contact = contactsById.get(contactId);
     const name = contact
-      ? `${contact.firstName} ${contact.lastName}`.trim() || contact.email
+      ? formatContactName(contact) || contactId
       : contactId;
 
     try {
@@ -269,7 +265,7 @@ export async function revertStudentsToRegistrants(
   for (const contactId of contactIds) {
     const contact = contactsById.get(contactId);
     const name = contact
-      ? `${contact.firstName} ${contact.lastName}`.trim() || contact.email
+      ? formatContactName(contact) || contactId
       : contactId;
 
     try {
