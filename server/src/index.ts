@@ -1,3 +1,5 @@
+import "./bootstrap.js";
+import { execFile } from "node:child_process";
 import cors from "cors";
 import express from "express";
 import fs from "node:fs";
@@ -16,7 +18,10 @@ if (appConfig.isProduction) {
 
   if (!fs.existsSync(distPath)) {
     console.error(
-      `Client build not found at ${distPath}. Run "npm run build" from the project root first.`,
+      `Client build not found at ${distPath}.\n` +
+        (appConfig.isPackaged
+          ? 'Make sure the "client/dist" folder is next to TCFLabelChange.exe.'
+          : 'Run "npm run build" from the project root first.'),
     );
     process.exit(1);
   }
@@ -28,11 +33,30 @@ if (appConfig.isProduction) {
   });
 }
 
+function openBrowser(url: string): void {
+  if (process.platform === "win32") {
+    execFile("cmd", ["/c", "start", "", url], { windowsHide: true }, () => {});
+    return;
+  }
+
+  const command =
+    process.platform === "darwin" ? "open" : "xdg-open";
+  execFile(command, [url], () => {});
+}
+
 app.listen(appConfig.port, () => {
   const mode = appConfig.isProduction ? "production" : "development";
-  console.log(`Server running on http://localhost:${appConfig.port} (${mode})`);
+  const url = `http://localhost:${appConfig.port}`;
+  console.log(`Server running on ${url} (${mode})`);
 
   if (!appConfig.isProduction) {
     console.log("Run the client with: npm run dev -w client");
+    return;
+  }
+
+  if (appConfig.isPackaged) {
+    console.log("Opening the app in your browser...");
+    openBrowser(url);
+    console.log("Keep this window open while using the app. Close it to stop.");
   }
 });

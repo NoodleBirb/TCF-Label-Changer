@@ -1,5 +1,9 @@
 node_modules
 dist
+dist-bundle
+release
+sea-prep.blob
+sea-config.json
 .env
 *.local
 .DS_Store
