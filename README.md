@@ -56,32 +56,67 @@ Create a token at: https://app.hubspot.com/l/settings/private-apps
 
    Open http://localhost:3001
 
-## Packaging as a Windows `.exe`
+## Packaging as a standalone app
 
-The release is a folder containing a self-contained Node executable, the built UI, and a `.env` file. Distribute the **entire folder**, not just the `.exe`.
+The release is a folder containing a self-contained Node executable, the built UI, and a `.env` file. Distribute the **entire folder**, not just the executable.
 
 Packaging uses [Node.js Single Executable Applications](https://nodejs.org/api/single-executable-applications.html) (SEA). You need **Node.js 20+** on the machine that builds the release.
 
-### Build the release (on your dev machine)
+**Build on the same OS you are targeting** when packaging locally — or use **GitHub Actions** (below) to build Windows and Mac from one repo without a Mac on your desk.
 
-```powershell
+### Build locally
+
+```bash
 npm install
 npm run package
 ```
 
-Output:
+### Build with GitHub Actions (Windows + Mac)
+
+A workflow at `.github/workflows/release.yml` builds both platforms in parallel.
+
+**Run manually**
+
+1. Push this repo to GitHub.
+2. Open **Actions** → **Build releases** → **Run workflow**.
+
+**Run on release tag**
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+**Download builds**
+
+1. Open the completed workflow run on the Actions tab.
+2. Download artifacts:
+   - `TCFLabelChange-windows` — contains `TCFLabelChange.exe`
+   - `TCFLabelChange-macos` — contains `TCFLabelChange`
+
+Each artifact is the full `release/TCFLabelChange` folder (executable, `client/dist`, `.env.example`, `README.txt`). Unzip, add `.env`, and distribute.
+
+Artifacts are kept for 30 days. Mac builds are unsigned — users may need to allow the app in System Settings or run `xattr -dr com.apple.quarantine TCFLabelChange`.
+
+### Release output (`release/TCFLabelChange/`)
+
+| Platform | Executable | Notes |
+|----------|------------|-------|
+| Windows | `TCFLabelChange.exe` | Double-click to run |
+| macOS | `TCFLabelChange` | Double-click or `./TCFLabelChange` in Terminal |
+| Linux | `TCFLabelChange` | `./TCFLabelChange` in Terminal |
+
+All releases also include:
 
 ```text
-release/TCFLabelChange/
-  TCFLabelChange.exe      # self-contained server (~80MB, includes Node runtime)
-  client/dist/            # web UI assets (required)
-  .env.example
-  README.txt
+client/dist/            # web UI assets (required)
+.env.example
+README.txt
 ```
 
 ### Prepare for end users
 
-1. Copy the whole `release/TCFLabelChange` folder to the user's computer (zip it for easy sharing).
+1. Copy the whole `release/TCFLabelChange` folder to the user's computer (zip it for sharing).
 2. Rename `.env.example` to `.env` inside that folder.
 3. Add the HubSpot private app token to `.env`:
 
@@ -90,19 +125,23 @@ release/TCFLabelChange/
    PORT=3001
    ```
 
-4. Double-click **`TCFLabelChange.exe`**.
-   - A console window opens — **keep it open** while using the app.
-   - The app opens in the default browser at http://localhost:3001
+4. Launch the app:
+   - **Windows:** double-click `TCFLabelChange.exe`
+   - **macOS:** double-click `TCFLabelChange`, or run `./TCFLabelChange` from Terminal
+   - **Linux:** run `./TCFLabelChange` from Terminal
 
-5. To stop the app, close the console window.
+   Keep the terminal/console window open while using the app. The browser opens at http://localhost:3001
 
-### Packaging notes
+5. To stop the app, close the terminal window (or press Ctrl+C).
 
-- The `.exe` embeds the server only. The `client/dist` folder **must stay** next to the executable.
+### Platform notes
+
+- The executable embeds the server only. The `client/dist` folder **must stay** next to it.
 - The `.env` file **must stay** next to the executable.
 - Re-run `npm run package` after code changes to produce an updated build.
-- Windows SmartScreen may warn on first run for unsigned executables — expected for internal tools.
 - End users do **not** need Node.js installed.
+- **Windows:** SmartScreen may warn on first run for unsigned executables.
+- **macOS:** If blocked, run `xattr -dr com.apple.quarantine TCFLabelChange` in the app folder, or allow it under System Settings → Privacy & Security.
 
 ## Project structure
 
@@ -122,7 +161,7 @@ HubSpot object IDs, pipeline stages, and association labels are configured in `s
 | `npm run dev` | Start client and server with hot reload |
 | `npm run build` | Build client and compile server TypeScript |
 | `npm run start` | Run production server (serves UI on port 3001) |
-| `npm run package` | Build everything and create `release/TCFLabelChange/` (Windows `.exe`) |
+| `npm run package` | Build standalone app for the current OS (`release/TCFLabelChange/`) |
 | `npm run lint` | Lint the client |
 
 ## Troubleshooting

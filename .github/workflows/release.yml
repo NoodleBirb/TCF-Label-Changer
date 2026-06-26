@@ -1,0 +1,52 @@
+name: Build releases
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  package:
+    name: Package (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            artifact-name: TCFLabelChange-windows
+          - os: macos-latest
+            platform: macos
+            artifact-name: TCFLabelChange-macos
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build client and server
+        run: npm run build
+
+      - name: Bundle server for packaging
+        run: npm run build:bundle
+
+      - name: Assemble standalone app
+        run: node scripts/assemble-release.mjs
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: release/TCFLabelChange/
+          if-no-files-found: error
+          retention-days: 30
