@@ -12,10 +12,13 @@ import {
   contactHasLabel,
   getAssociationLabelSpecs,
   getContactLabelKey,
-  getLabelSpec,
   type AssociationType,
-  type ResolvedAssociationSpec,
 } from "./associationLabels.js";
+import {
+  getAssociationTypesForContact,
+  normalizeRecordId,
+  relabelContactAssociation,
+} from "./associationUpdates.js";
 import { fetchContactDetailsByIds, formatContactName } from "./contacts.js";
 
 export type TrainingSummary = {
@@ -128,7 +131,7 @@ export async function listTrainingContacts(
 
   const contacts: TrainingContact[] = visible.map((row) => {
     const label = getContactLabelKey(row.associationTypes)!;
-    const contactId = String(row.toObjectId);
+    const contactId = normalizeRecordId(row.toObjectId);
     const details = detailsById.get(contactId) ?? {
       firstName: "",
       lastName: "",
@@ -160,50 +163,6 @@ export async function listTrainingContacts(
   return contacts;
 }
 
-function toAssociationInput(
-  trainingId: string,
-  contactId: string,
-  spec: ResolvedAssociationSpec,
-) {
-  return {
-    _from: { id: trainingId },
-    to: { id: contactId },
-    types: [
-      {
-        associationCategory: spec.associationCategory,
-        associationTypeId: spec.associationTypeId,
-      },
-    ],
-  };
-}
-
-async function relabelContact(
-  trainingId: string,
-  contactId: string,
-  fromLabel: AssociationLabelKey,
-  toLabel: AssociationLabelKey,
-): Promise<void> {
-  const hubspot = getHubSpotClient();
-  const fromSpec = await getLabelSpec(fromLabel);
-  const toSpec = await getLabelSpec(toLabel);
-
-  await hubspot.crm.associations.v4.batchApi.archiveLabels(
-    TRAINING_OBJECT_TYPE,
-    "contacts",
-    {
-      inputs: [toAssociationInput(trainingId, contactId, fromSpec)],
-    },
-  );
-
-  await hubspot.crm.associations.v4.batchApi.create(
-    TRAINING_OBJECT_TYPE,
-    "contacts",
-    {
-      inputs: [toAssociationInput(trainingId, contactId, toSpec)],
-    },
-  );
-}
-
 export async function convertRegistrantsToStudents(
   trainingId: string,
   contactIds: string[],
@@ -227,18 +186,25 @@ export async function convertRegistrantsToStudents(
         throw new Error("Contact is not a registrant");
       }
 
-      const associations = await listAllAssociatedContacts(trainingId);
-      const row = associations.find((item) => item.toObjectId === contactId);
-      if (!row || !contactHasLabel(row.associationTypes, "registrant")) {
+      const associationTypes = await getAssociationTypesForContact(
+        trainingId,
+        contactId,
+      );
+      if (!contactHasLabel(associationTypes, "registrant")) {
         throw new Error("Contact no longer has the registrant label");
       }
 
-      await relabelContact(trainingId, contactId, "registrant", "student");
+      await relabelContactAssociation(
+        trainingId,
+        contactId,
+        "registrant",
+        "student",
+      );
       results.push({
         contactId,
         name,
         success: true,
-        message: "Updated to student",
+        message: "Updated to attendee",
       });
     } catch (error) {
       results.push({
@@ -269,7 +235,12 @@ export async function revertStudentsToRegistrants(
       : contactId;
 
     try {
-      await relabelContact(trainingId, contactId, "student", "registrant");
+      await relabelContactAssociation(
+        trainingId,
+        contactId,
+        "student",
+        "registrant",
+      );
       results.push({
         contactId,
         name,
