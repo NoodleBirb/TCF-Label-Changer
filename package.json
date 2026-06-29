@@ -14,9 +14,9 @@
     "build": "npm run build -w client && npm run build -w server",
     "build:bundle": "node scripts/bundle-server.mjs",
     "build:electron": "node scripts/build-electron.mjs",
-    "package": "npm run build && npm run build:bundle && npm run build:electron && electron-builder",
-    "package:win": "npm run build && npm run build:bundle && npm run build:electron && electron-builder --win portable",
-    "package:mac": "npm run build && npm run build:bundle && npm run build:electron && electron-builder --mac dmg",
+    "package": "npm run build && npm run build:bundle && npm run build:electron && electron-builder --publish never",
+    "package:win": "npm run build && npm run build:bundle && npm run build:electron && electron-builder --win portable --publish never",
+    "package:mac": "npm run build && npm run build:bundle && npm run build:electron && electron-builder --mac dmg --publish never",
     "electron:dev": "npm run build:electron && concurrently -n dev,electron -c cyan,green \"npm run dev\" \"wait-on http://localhost:5173 && cross-env ELECTRON_DEV=1 electron .\"",
     "start": "cross-env NODE_ENV=production npm run start -w server",
     "lint": "npm run lint -w client"
@@ -46,6 +46,7 @@
       "package.json"
     ],
     "asar": true,
+    "publish": null,
     "win": {
       "target": [
         "portable"
