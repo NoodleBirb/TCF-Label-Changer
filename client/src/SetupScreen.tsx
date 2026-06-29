@@ -67,21 +67,7 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
 
         <div className="setup-help">
           <h2>Where do I get a token?</h2>
-          <ol>
-            <li>
-              Open{" "}
-              <a
-                href="https://app.hubspot.com/l/settings/private-apps"
-                target="_blank"
-                rel="noreferrer"
-              >
-                HubSpot private apps
-              </a>
-              .
-            </li>
-            <li>Create or open a private app with CRM read/write scopes.</li>
-            <li>Copy the access token and paste it above.</li>
-          </ol>
+            <p>Contact TCF dev team to get the token.</p>
         </div>
       </div>
     </div>
