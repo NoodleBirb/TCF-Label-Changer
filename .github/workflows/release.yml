@@ -17,9 +17,13 @@ jobs:
           - os: windows-latest
             platform: windows
             artifact-name: TCFLabelChange-windows
+            package-command: npm run package:win
+            artifact-path: release/TCFLabelChange.exe
           - os: macos-latest
             platform: macos
             artifact-name: TCFLabelChange-macos
+            package-command: npm run package:mac
+            artifact-path: release/TCFLabelChange.dmg
 
     steps:
       - name: Checkout
@@ -34,19 +38,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build client and server
-        run: npm run build
-
-      - name: Bundle server for packaging
-        run: npm run build:bundle
-
-      - name: Assemble standalone app
-        run: node scripts/assemble-release.mjs
+      - name: Package desktop app
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: ${{ matrix.package-command }}
 
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}
-          path: release/TCFLabelChange/
+          path: ${{ matrix.artifact-path }}
           if-no-files-found: error
           retention-days: 30

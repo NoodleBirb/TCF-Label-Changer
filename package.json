@@ -3,6 +3,8 @@
   "private": true,
   "version": "0.1.0",
   "description": "HubSpot integration tool with a local web UI",
+  "author": "TCF",
+  "main": "electron/dist/main.cjs",
   "workspaces": [
     "client",
     "server"
@@ -11,18 +13,55 @@
     "dev": "concurrently -n client,server -c cyan,magenta \"npm run dev -w client\" \"npm run dev -w server\"",
     "build": "npm run build -w client && npm run build -w server",
     "build:bundle": "node scripts/bundle-server.mjs",
-    "package": "npm run build && npm run build:bundle && node scripts/assemble-release.mjs",
+    "build:electron": "node scripts/build-electron.mjs",
+    "package": "npm run build && npm run build:bundle && npm run build:electron && electron-builder",
+    "package:win": "npm run build && npm run build:bundle && npm run build:electron && electron-builder --win portable",
+    "package:mac": "npm run build && npm run build:bundle && npm run build:electron && electron-builder --mac dmg",
+    "electron:dev": "npm run build:electron && concurrently -n dev,electron -c cyan,green \"npm run dev\" \"wait-on http://localhost:5173 && cross-env ELECTRON_DEV=1 electron .\"",
     "start": "cross-env NODE_ENV=production npm run start -w server",
     "lint": "npm run lint -w client"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
     "cross-env": "^7.0.3",
+    "electron": "^35.7.5",
+    "electron-builder": "^25.1.8",
     "esbuild": "^0.25.0",
-    "postject": "1.0.0-alpha.6"
+    "wait-on": "^8.0.3"
   },
   "overrides": {
     "vite": "6.3.5",
     "@vitejs/plugin-react": "5.2.0"
+  },
+  "build": {
+    "appId": "com.tcf.labelchange",
+    "productName": "TCF Label Change",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/dist/**/*",
+      "server/dist-bundle/**/*",
+      "client/dist/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "artifactName": "TCFLabelChange.${ext}",
+      "signAndEditExecutable": false
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.business",
+      "artifactName": "TCFLabelChange.${ext}"
+    },
+    "portable": {
+      "artifactName": "TCFLabelChange.${ext}"
+    }
   }
 }

@@ -4,6 +4,7 @@ server/package-lock.json
 dist
 dist-bundle
 release
+electron/dist
 sea-prep.blob
 sea-config.json
 .env

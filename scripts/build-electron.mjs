@@ -5,14 +5,14 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 await esbuild.build({
-  entryPoints: [path.join(root, "server", "src", "index.ts")],
+  entryPoints: [path.join(root, "electron", "main.ts")],
   bundle: true,
   platform: "node",
   target: "node20",
   format: "cjs",
-  outfile: path.join(root, "server", "dist-bundle", "index.cjs"),
+  outfile: path.join(root, "electron", "dist", "main.cjs"),
   logLevel: "info",
-  legalComments: "none",
+  external: ["electron"],
 });
 
-console.log("Server bundle written to server/dist-bundle/index.cjs");
+console.log("Electron main written to electron/dist/main.cjs");

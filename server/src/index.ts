@@ -1,8 +1,8 @@
 import "./bootstrap.js";
-import { execFile } from "node:child_process";
 import cors from "cors";
 import express from "express";
 import fs from "node:fs";
+import type { Server } from "node:http";
 import path from "node:path";
 import { appConfig } from "./config.js";
 import { apiRouter } from "./routes/api.js";
@@ -19,8 +19,8 @@ if (appConfig.isProduction) {
   if (!fs.existsSync(distPath)) {
     console.error(
       `Client build not found at ${distPath}.\n` +
-        (appConfig.isPackaged
-          ? 'Make sure the "client/dist" folder is next to TCFLabelChange.exe.'
+        (appConfig.isElectron
+          ? "Rebuild the app — the UI assets are missing from the package."
           : 'Run "npm run build" from the project root first.'),
     );
     process.exit(1);
@@ -33,30 +33,35 @@ if (appConfig.isProduction) {
   });
 }
 
-function openBrowser(url: string): void {
-  if (process.platform === "win32") {
-    execFile("cmd", ["/c", "start", "", url], { windowsHide: true }, () => {});
-    return;
-  }
+export function startServer(): Promise<Server> {
+  return new Promise((resolve) => {
+    const server = app.listen(appConfig.port, "127.0.0.1", () => {
+      const mode = appConfig.isProduction ? "production" : "development";
+      const url = `http://127.0.0.1:${appConfig.port}`;
+      console.log(`Server running on ${url} (${mode})`);
 
-  const command =
-    process.platform === "darwin" ? "open" : "xdg-open";
-  execFile(command, [url], () => {});
+      if (!appConfig.isProduction) {
+        console.log("Run the client with: npm run dev -w client");
+      }
+
+      resolve(server);
+    });
+  });
 }
 
-app.listen(appConfig.port, () => {
-  const mode = appConfig.isProduction ? "production" : "development";
-  const url = `http://localhost:${appConfig.port}`;
-  console.log(`Server running on ${url} (${mode})`);
-
-  if (!appConfig.isProduction) {
-    console.log("Run the client with: npm run dev -w client");
-    return;
+function isDirectRun(): boolean {
+  const entry = process.argv[1];
+  if (!entry) {
+    return false;
   }
 
-  if (appConfig.isPackaged) {
-    console.log("Opening the app in your browser...");
-    openBrowser(url);
-    console.log("Keep this window open while using the app. Close it to stop.");
-  }
-});
+  const normalizedEntry = path.resolve(entry);
+  return (
+    normalizedEntry.endsWith(`${path.sep}index.js`) ||
+    normalizedEntry.endsWith(`${path.sep}index.cjs`)
+  );
+}
+
+if (isDirectRun()) {
+  void startServer();
+}

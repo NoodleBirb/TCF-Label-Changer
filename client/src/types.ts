@@ -36,3 +36,15 @@ export type UndoStatus = {
     items: Array<{ contactId: string; name: string }>;
   } | null;
 };
+
+export type SetupStatus = {
+  configured: boolean;
+  connected: boolean;
+  supportsSetup: boolean;
+  message: string;
+};
+
+export type TokenMasked = {
+  hasToken: boolean;
+  masked: string;
+};

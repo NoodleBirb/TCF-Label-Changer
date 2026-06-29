@@ -1,16 +1,20 @@
 import { Client } from "@hubspot/api-client";
-import { appConfig, isHubSpotConfigured } from "../config.js";
+import { getHubSpotAccessToken, isHubSpotConfigured } from "../config.js";
 
 let client: Client | null = null;
+
+export function resetHubSpotClient(): void {
+  client = null;
+}
 
 export function getHubSpotClient(): Client {
   if (!isHubSpotConfigured()) {
     throw new Error(
-      "HUBSPOT_ACCESS_TOKEN is not set. Copy .env.example to .env and add your token.",
+      "HUBSPOT_ACCESS_TOKEN is not set. Add your HubSpot private app token in Settings.",
     );
   }
 
-  client ??= new Client({ accessToken: appConfig.hubspotAccessToken });
+  client ??= new Client({ accessToken: getHubSpotAccessToken() });
   return client;
 }
 

@@ -1,8 +1,8 @@
-import { isSea } from "node:sea";
 import { config } from "dotenv";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadUserConfig } from "./userConfig.js";
 
 declare const __dirname: string | undefined;
 
@@ -11,27 +11,38 @@ const moduleDir =
     ? __dirname
     : path.dirname(fileURLToPath(import.meta.url));
 
-function isPackagedRuntime(): boolean {
-  return isSea() || "pkg" in process;
+function isElectronRuntime(): boolean {
+  return process.env.ELECTRON_APP === "1";
 }
 
 function resolveProjectRoot(): string {
-  if (isPackagedRuntime()) {
-    return path.dirname(process.execPath);
+  if (isElectronRuntime()) {
+    return process.env.ELECTRON_APP_ROOT?.trim() || path.dirname(process.execPath);
   }
 
-  const fromModule = path.resolve(moduleDir, "../..");
-  if (fs.existsSync(path.join(fromModule, "client", "dist"))) {
-    return fromModule;
-  }
-
-  return fromModule;
+  return path.resolve(moduleDir, "../..");
 }
 
 const projectRoot = resolveProjectRoot();
 
 config({ path: path.join(projectRoot, ".env") });
 config({ path: path.join(projectRoot, "server", ".env") });
+
+const userConfig = loadUserConfig();
+
+let hubspotAccessToken =
+  userConfig?.hubspotAccessToken ||
+  process.env.HUBSPOT_ACCESS_TOKEN?.trim() ||
+  "";
+
+function resolveClientDistPath(): string {
+  const fromEnv = process.env.CLIENT_DIST_PATH?.trim();
+  if (fromEnv) {
+    return fromEnv;
+  }
+
+  return path.join(projectRoot, "client", "dist");
+}
 
 function readPort(): number {
   const raw = process.env.PORT ?? "3001";
@@ -45,13 +56,22 @@ function readPort(): number {
 export const appConfig = {
   port: readPort(),
   nodeEnv: process.env.NODE_ENV ?? "development",
-  hubspotAccessToken: process.env.HUBSPOT_ACCESS_TOKEN?.trim() ?? "",
   isProduction: (process.env.NODE_ENV ?? "development") === "production",
-  isPackaged: isPackagedRuntime(),
+  isElectron: isElectronRuntime(),
   projectRoot,
-  clientDistPath: path.join(projectRoot, "client", "dist"),
+  clientDistPath: resolveClientDistPath(),
+  configFilePath: process.env.CONFIG_FILE_PATH?.trim() ?? null,
 } as const;
 
+export function getHubSpotAccessToken(): string {
+  return hubspotAccessToken;
+}
+
+export function setHubSpotAccessToken(token: string): void {
+  hubspotAccessToken = token.trim();
+  process.env.HUBSPOT_ACCESS_TOKEN = hubspotAccessToken;
+}
+
 export function isHubSpotConfigured(): boolean {
-  return appConfig.hubspotAccessToken.length > 0;
+  return getHubSpotAccessToken().length > 0;
 }

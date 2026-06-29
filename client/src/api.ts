@@ -1,6 +1,8 @@
 import type {
   ConvertResponse,
   Program,
+  SetupStatus,
+  TokenMasked,
   Training,
   TrainingContact,
   UndoStatus,
@@ -85,5 +87,24 @@ export async function fetchUndoStatus(): Promise<UndoStatus> {
 
 export async function undoLastBatch(): Promise<ConvertResponse> {
   const response = await fetch("/api/undo", { method: "POST" });
+  return parseJson(response);
+}
+
+export async function fetchSetupStatus(): Promise<SetupStatus> {
+  const response = await fetch("/api/setup/status");
+  return parseJson(response);
+}
+
+export async function saveHubSpotToken(token: string): Promise<{ connected: boolean; message: string }> {
+  const response = await fetch("/api/setup/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+  return parseJson(response);
+}
+
+export async function fetchMaskedToken(): Promise<TokenMasked> {
+  const response = await fetch("/api/setup/token-masked");
   return parseJson(response);
 }
